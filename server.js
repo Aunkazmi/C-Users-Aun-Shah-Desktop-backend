@@ -7,7 +7,7 @@ import quotationRoutes from './routes/quotationRoutes.js'
 const app = express()
 const port = process.env.PORT || 5000
 
-// Allowed origins setup
+// Clean allowed origins array
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -15,31 +15,24 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean).map(url => url.replace(/\/$/, ''))
 
-const corsOptions = {
+// Bulletproof CORS Configuration
+app.use(cors({
   origin: (origin, callback) => {
-    // Non-browser requests (Postman, server-to-server) don't send origin
+    // Postman ya direct server-to-server calls ke paas origin header nahi hota
     if (!origin) return callback(null, true)
-
-    const normalizedOrigin = origin.replace(/\/$/, '')
-
-    // Check exact matches or Vercel deployments (*.vercel.app)
-    const isAllowed = allowedOrigins.includes(normalizedOrigin) || 
-                      /\.vercel\.app$/.test(normalizedOrigin)
-
-    if (isAllowed) {
+    
+    // Agar origin list mein ho ya Vercel ka domain ho to allow karo
+    const cleanOrigin = origin.replace(/\/$/, '')
+    if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
       return callback(null, true)
     }
-
-    console.error(`CORS Blocked Origin: ${origin}`)
-    return callback(null, false) // Throw error ki jagah cleanly false pass karein taaki 500 error na aaye
+    
+    return callback(null, false)
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}
-
-// Global CORS Middleware (Handling both Preflight OPTIONS & regular requests automatically)
-app.use(cors(corsOptions))
+}))
 
 app.use(express.json())
 
