@@ -4,8 +4,8 @@ import nodemailer from 'nodemailer'
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // Gmail App Password ke liye 465 SSL necessary hai
+  port: 587,
+  secure: false, // Gmail App Password ke liye 465 SSL necessary hai
   auth: {
     user: process.env.SMTP_USER,     // Aapka Gmail (e.g. example@gmail.com)
     pass: process.env.SMTP_PASSWORD, // 16-digit App Password (no spaces)
@@ -13,9 +13,9 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false
   },
-  connectionTimeout: 20000, // Timeout limits extended for cloud handshakes
-  greetingTimeout: 20000,
-  socketTimeout: 20000
+  connectionTimeout: 20000,
+greetingTimeout: 20000,
+socketTimeout: 20000
 })
 
 export async function sendQuotationConfirmation(quotation) {
