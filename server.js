@@ -7,13 +7,21 @@ import quotationRoutes from './routes/quotationRoutes.js'
 const app = express()
 const port = process.env.PORT || 5000
 
-// 1. Simple & Working CORS Setup
+// 1. Clean CORS Setup
 app.use(cors())
 
 // 2. Request Body Parser
 app.use(express.json())
 
-// Health check endpoint
+// 3. Fallback Preflight OPTIONS Handler (Bypass Router Crash)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200)
+  }
+  next()
+})
+
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' })
 })
