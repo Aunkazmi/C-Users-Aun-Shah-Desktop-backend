@@ -1,43 +1,31 @@
 import nodemailer from 'nodemailer'
 
-const smtpConfigured = Boolean(
-  process.env.SMTP_HOST &&
-  process.env.SMTP_USER &&
-  process.env.SMTP_PASSWORD
-)
-
-const transporter = smtpConfigured
-  ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT || 587), // Default set to 587 for cloud platforms
-      secure: process.env.SMTP_SECURE === 'true', // Port 587 requires secure: false
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false // Prevents connection drops on Railway
-      },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 15000,
-    })
-  : null
+// Google App Password ya OAuth2 configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // Gmail App Password ke liye 465 SSL necessary hai
+  auth: {
+    user: process.env.SMTP_USER,     // Aapka Gmail (e.g. example@gmail.com)
+    pass: process.env.SMTP_PASSWORD, // 16-digit App Password (no spaces)
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 20000, // Timeout limits extended for cloud handshakes
+  greetingTimeout: 20000,
+  socketTimeout: 20000
+})
 
 export async function sendQuotationConfirmation(quotation) {
-  if (!transporter) {
-    console.error('SMTP credentials missing in environment variables.')
-    return false
-  }
-
   try {
-    const from = process.env.MAIL_FROM || `Whitespace <${process.env.SMTP_USER}>`
     const deliverables = (quotation.selectedDeliverables || [])
       .map((item) => `<li>${escapeHtml(item)}</li>`)
       .join('')
 
     await transporter.sendMail({
-      from,
+      from: `Whitespace <${process.env.SMTP_USER}>`,
       to: quotation.email,
       subject: 'Your Whitespace request is under process',
       text: `Hi ${quotation.fullName},\n\nThank you for opting for Whitespace. Your request for a personal workspace is now under process.\n\nService: ${quotation.serviceType}\nCompany: ${quotation.company}\nTeam size: ${quotation.teamSize}\n\nSelected deliverables:\n${(quotation.selectedDeliverables || []).map((item) => `- ${item}`).join('\n')}\n\nOur onboarding team will review your request and contact you with the next steps.\n\nWarm regards,\nThe Whitespace Team`,
@@ -66,9 +54,10 @@ export async function sendQuotationConfirmation(quotation) {
       `,
     })
 
+    console.log('Gmail SMTP email sent successfully!')
     return true
   } catch (error) {
-    console.error('Email sending failed:', error)
+    console.error('Gmail SMTP error:', error)
     return false
   }
 }
