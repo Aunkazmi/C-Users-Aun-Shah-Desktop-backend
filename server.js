@@ -7,33 +7,10 @@ import quotationRoutes from './routes/quotationRoutes.js'
 const app = express()
 const port = process.env.PORT || 5000
 
-// Clean allowed origins array
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:3000',
-  process.env.FRONTEND_URL,
-].filter(Boolean).map(url => url.replace(/\/$/, ''))
+// 1. Simple & Working CORS Setup
+app.use(cors())
 
-// Bulletproof CORS Configuration
-app.use(cors({
-  origin: (origin, callback) => {
-    // Postman ya direct server-to-server calls ke paas origin header nahi hota
-    if (!origin) return callback(null, true)
-    
-    // Agar origin list mein ho ya Vercel ka domain ho to allow karo
-    const cleanOrigin = origin.replace(/\/$/, '')
-    if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
-      return callback(null, true)
-    }
-    
-    return callback(null, false)
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}))
-
+// 2. Request Body Parser
 app.use(express.json())
 
 // Health check endpoint
